@@ -1,0 +1,61 @@
+{
+    "1": {
+        "default": "John Doe",
+        "academic": "Dr. John Doe",
+        "professional": "John Doe, Ph.D."
+    },
+    "2": {
+        "default": "Software Engineer",
+        "data_scientist": "Data Scientist",
+        "researcher": "Research Scientist",
+        "academic": "Professor of Computer Science",
+        "ai_engineer": "AI/ML Engineer"
+    },
+    "3": {
+        "default": "john.doe@email.com",
+        "academic": "j.doe@university.edu",
+        "professional": "john.doe@company.com"
+    },
+    "4": {
+        "default": "+1-234-567-8900",
+        "uk": "+44-20-1234-5678",
+        "usa": "+1-234-567-8900",
+        "europe": "+33-1-23-45-67-89",
+        "spain": "+34-91-234-5678"
+    },
+    "5": {
+        "default": "New York, NY",
+        "uk": "London, UK",
+        "usa": "San Francisco, CA",
+        "europe": "Paris, France",
+        "spain": "Madrid, Spain",
+        "switzerland": "Zurich, Switzerland"
+    },
+    "6": {
+        "default": "Experienced software engineer with 5+ years in full-stack development.",
+        "data_scientist": "Data scientist with expertise in machine learning and statistical analysis.",
+        "researcher": "Research scientist focused on computer vision and natural language processing.",
+        "academic": "Academic researcher with publications in top-tier conferences and journals.",
+        "ai_engineer": "AI/ML engineer specializing in deep learning and production ML systems."
+    },
+    "education": {
+        "default": "Bachelor's in Computer Science",
+        "academic": "Ph.D. in Computer Science, M.S. in Computer Science",
+        "data_scientist": "M.S. in Data Science, B.S. in Mathematics",
+        "researcher": "Ph.D. in Machine Learning, M.S. in Computer Science"
+    },
+    "skills": {
+        "default": "Python, JavaScript, SQL, Git",
+        "data_scientist": "Python, R, SQL, TensorFlow, Scikit-learn, Pandas",
+        "researcher": "Python, PyTorch, TensorFlow, CUDA, LaTeX, Git",
+        "academic": "Python, MATLAB, R, LaTeX, Statistical Analysis",
+        "ai_engineer": "Python, PyTorch, TensorFlow, Docker, Kubernetes, MLOps"
+    },
+    "experience": {
+        "default": "5 years of software development experience",
+        "data_scientist": "3 years of data science and analytics experience",
+        "researcher": "4 years of research experience in AI/ML",
+        "academic": "8 years of academic and research experience",
+        "ai_engineer": "6 years of AI/ML engineering experience"
+    }
+}

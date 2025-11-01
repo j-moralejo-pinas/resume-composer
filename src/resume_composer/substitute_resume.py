@@ -1,36 +1,47 @@
 #!/usr/bin/env python3
 """
-Resume Template Substitution Script
+Resume Template Substitution Script.
 
 This script takes a LaTeX resume template with placeholders (<1>, <2>, etc.) and substitutes
 them with predefined values based on tags. Each placeholder has a default value and can have
 tag-specific values. When multiple tags are provided, the first matching tag takes precedence.
 
-Usage:
-    python substitute_resume.py [--tags TAG1,TAG2,...] [--input INPUT_FILE] [--output OUTPUT_FILE] [--config CONFIG_FILE]
+Usage
+-----
+    python substitute_resume.py [--tags TAG1,TAG2,...] [--input INPUT_FILE]
+    [--output OUTPUT_FILE] [--config CONFIG_FILE]
 
-Examples:
+Examples
+--------
     python substitute_resume.py --tags data_scientist
-    python substitute_resume.py --tags ai_engineer,research --input resume.tex --output resume_customized.tex
+    python substitute_resume.py --tags ai_engineer,research --input resume.tex
+    --output resume_customized.tex
     python substitute_resume.py --tags academic,industry --config my_config.json
 """
 
 import argparse
 import json
+import logging
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class ResumeSubstituter:
     """Handles the substitution of placeholders in resume templates."""
 
-    def __init__(self, config_file: str = "config.json"):
+    def __init__(self, config_file: str = "config.json") -> None:
         """
         Initialize the substituter with a configuration file.
 
-        Args:
-            config_file: Path to the JSON configuration file
+        Parameters
+        ----------
+        config_file : str, default="config.json"
+            Path to the JSON configuration file
         """
         self.config_file = config_file
         self.config = self._load_config()
@@ -38,52 +49,83 @@ class ResumeSubstituter:
     def _load_config(self) -> dict[str, dict[str, str]]:
         """Load the configuration from the JSON file."""
         try:
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with Path(self.config_file).open("r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
-            print(f"Error: Configuration file '{self.config_file}' not found.")
+            logger.exception("Configuration file '%s' not found.", self.config_file)
             sys.exit(1)
-        except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON in configuration file: {e}")
+        except json.JSONDecodeError:
+            logger.exception("Invalid JSON in configuration file")
             sys.exit(1)
 
-    def _get_value_for_placeholder(self, placeholder_id: str, tags: list[str]) -> str:
+    def _get_value_for_placeholder(self, placeholder_id: str, tags: list[str]) -> str:  # noqa: PLR0911
         """
         Get the appropriate value for a placeholder based on tags.
 
-        Args:
-            placeholder_id: The ID of the placeholder (e.g., "1", "2")
-            tags: list of tags in order of priority
+        Parameters
+        ----------
+        placeholder_id : str
+            The ID of the placeholder (e.g., "1", "2")
+        tags : list[str]
+            List of tags in order of priority
 
-        Returns:
+        Returns
+        -------
+        str
             The value to substitute for the placeholder
         """
         if placeholder_id not in self.config:
-            print(f"Warning: No configuration found for placeholder <{placeholder_id}>")
+            logger.warning("No configuration found for placeholder <%s>", placeholder_id)
             return f"<{placeholder_id}>"
 
         placeholder_config = self.config[placeholder_id]
 
+        # Handle case where config value is None
+        if placeholder_config is None:
+            logger.warning("Configuration for placeholder <%s> is null", placeholder_id)
+            return f"<{placeholder_id}>"
+
         # Check tags in order of priority
         for tag in tags:
             if tag in placeholder_config:
-                return placeholder_config[tag]
+                value = placeholder_config[tag]
+                # Handle nested objects - convert to string if not already
+                if not isinstance(value, str):
+                    logger.warning(
+                        "Non-string value for placeholder <%s> tag '%s', converting to string",
+                        placeholder_id,
+                        tag,
+                    )
+                    return str(value)
+                return value
 
         # Fall back to default value
         if "default" in placeholder_config:
-            return placeholder_config["default"]
+            value = placeholder_config["default"]
+            # Handle nested objects - convert to string if not already
+            if not isinstance(value, str):
+                logger.warning(
+                    "Non-string default value for placeholder <%s>, converting to string",
+                    placeholder_id,
+                )
+                return str(value)
+            return value
 
-        print(f"Warning: No default value found for placeholder <{placeholder_id}>")
+        logger.warning("No default value found for placeholder <%s>", placeholder_id)
         return f"<{placeholder_id}>"
 
     def map_country_to_tag(self, country: str) -> str:
         """
         Map a country name to an appropriate tag.
 
-        Args:
-            country: Country name (case-insensitive)
+        Parameters
+        ----------
+        country : str
+            Country name (case-insensitive)
 
-        Returns:
+        Returns
+        -------
+        str
             Mapped tag name for configuration lookup
         """
         country_lower = country.lower()
@@ -153,17 +195,23 @@ class ResumeSubstituter:
     ) -> str:
         """
         Create folder structure based on tags and return the full output path.
+
         Pattern: {country}/base_{tags_concatenated_except_country}/{position}
 
-        Args:
-            tags: list of tags
-            base_output_file: Base output filename
+        Parameters
+        ----------
+        tags : list[str]
+            List of tags
+        base_output_file : str
+            Base output filename
+        country_original : str, default=""
+            Original country name for folder structure
 
-        Returns:
+        Returns
+        -------
+        str
             Full path including folder structure
         """
-        from pathlib import Path
-
         # Define country and position tags
         country_tags = {"uk", "usa", "switzerland", "europe", "spain"}
         position_tags = {
@@ -199,10 +247,7 @@ class ResumeSubstituter:
         extension = Path(base_output_file).suffix
 
         # Build the path components
-        if other_tags:
-            folder_name = f"_base_{'_'.join(other_tags)}"
-        else:
-            folder_name = "_base"
+        folder_name = f"_base_{'_'.join(other_tags)}" if other_tags else "_base"
 
         # Use original country name for folder, or fall back to tag-based country
         folder_country = country_original if country_original else country
@@ -220,35 +265,40 @@ class ResumeSubstituter:
         """
         Substitute placeholders in a file and write the result to another file.
 
-        Args:
-            input_file: Path to the input file
-            output_file: Path to the output file
-            tags: list of tags in order of priority
+        Parameters
+        ----------
+        input_file : str
+            Path to the input file
+        output_file : str
+            Path to the output file
+        tags : list[str]
+            List of tags in order of priority
         """
         try:
-            with open(input_file, "r", encoding="utf-8") as f:
+            with Path(input_file).open("r", encoding="utf-8") as f:
                 content = f.read()
         except FileNotFoundError:
-            print(f"Error: Input file '{input_file}' not found.")
+            logger.exception("Input file '%s' not found.", input_file)
             sys.exit(1)
         except UnicodeDecodeError:
-            print(f"Error: Could not read input file '{input_file}' as UTF-8.")
+            logger.exception("Could not read input file '%s' as UTF-8.", input_file)
             sys.exit(1)
 
-        # Find all placeholders in the format <number> or <name>
-        numeric_placeholders = re.findall(r"<(\d+)>", content)
-        named_placeholders = re.findall(r"<([a-zA-Z_][a-zA-Z0-9_]*)>", content)
-        placeholders = numeric_placeholders + named_placeholders
+        # Find all placeholders in the format <identifier> (alphanumeric)
+        placeholders = re.findall(r"<([a-zA-Z0-9_][a-zA-Z0-9_]*)>", content)
 
         if not placeholders:
-            print("No placeholders found in the input file.")
+            logger.warning("No placeholders found in the input file.")
+            # Still write the original content to output file
+            Path(output_file).write_text(content, encoding="utf-8")
+            logger.info("Output file created: %s", output_file)
             return
 
-        print(f"Found placeholders: {sorted(set(placeholders))}")
+        logger.info("Found placeholders: %s", sorted(set(placeholders)))
         if tags:
-            print(f"Using tags (in priority order): {', '.join(tags)}")
+            logger.info("Using tags (in priority order): %s", ", ".join(tags))
         else:
-            print("No tags provided, using default values")
+            logger.info("No tags provided, using default values")
 
         # Perform substitutions
         substitution_count = 0
@@ -262,41 +312,100 @@ class ResumeSubstituter:
             substitution_count += occurrences
 
             if occurrences > 0:
-                print(f"  <{placeholder_id}> -> '{value}' ({occurrences} occurrences)")
+                logger.info("  <%s> -> '%s' (%d occurrences)", placeholder_id, value, occurrences)
 
         # Write the result
         try:
-            with open(output_file, "w", encoding="utf-8") as f:
+            with Path(output_file).open("w", encoding="utf-8") as f:
                 f.write(content)
-            print(f"\nSuccessfully wrote {substitution_count} substitutions to '{output_file}'")
-        except IOError as e:
-            print(f"Error: Could not write to output file '{output_file}': {e}")
+            logger.info(
+                "Successfully wrote %d substitutions to '%s'", substitution_count, output_file
+            )
+        except OSError:
+            logger.exception("Could not write to output file '%s'", output_file)
             sys.exit(1)
 
     def list_available_tags(self) -> None:
-        """list all available tags from the configuration."""
+        """List all available tags from the configuration."""
         all_tags = set()
         for placeholder_config in self.config.values():
-            all_tags.update(key for key in placeholder_config.keys() if key != "default")
+            all_tags.update(key for key in placeholder_config if key != "default")
 
         if all_tags:
-            print("Available tags:")
+            message = "Available tags:"
+            logger.info(message)
             for tag in sorted(all_tags):
-                print(f"  - {tag}")
+                tag_message = f"  - {tag}"
+                logger.info(tag_message)
         else:
-            print("No tags found in configuration.")
+            message = "No tags found in configuration."
+            logger.info(message)
 
 
-def main():
-    """Main function to handle command line arguments and execute the script."""
+def process_resume_substitution(args: argparse.Namespace) -> None:
+    """
+    Process resume substitution with the given arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command line arguments from argparse
+    """
+    # Initialize the substituter
+    substituter = ResumeSubstituter(args.config)
+
+    # Handle list-tags option
+    if args.list_tags:
+        substituter.list_available_tags()
+        return
+
+    # Parse tags
+    tags = [tag.strip() for tag in args.tags.split(",") if tag.strip()] if args.tags else []
+
+    # Handle country argument
+    country_original = ""
+    if args.country:
+        country_original = args.country
+        country_tag = substituter.map_country_to_tag(args.country)
+        # Add country tag to the beginning of tags list for priority
+        if country_tag != "default":
+            tags.insert(0, country_tag)
+
+    # Determine whether to use folder structure
+    use_folders = args.use_folders and not args.no_folders
+
+    # Determine output file name
+    if args.output:
+        output_file = args.output
+    else:
+        input_path = Path(args.input)
+        if tags and use_folders:
+            # Use folder structure pattern
+            base_output = str(input_path.with_stem(input_path.stem + "_" + "_".join(tags)))
+            output_file = substituter.create_folder_structure(tags, base_output, country_original)
+        else:
+            # Use flat file naming
+            tag_suffix = "_" + "_".join(tags) if tags else "_default"
+            output_file = str(input_path.with_stem(input_path.stem + tag_suffix))
+
+    # Perform substitution
+    substituter.substitute_file(args.input, output_file, tags)
+
+    # Compile to PDF if requested
+    if args.compile:
+        compile_latex_to_pdf(output_file)
+
+
+def main() -> None:
+    """Handle command line arguments and execute the script."""
     parser = argparse.ArgumentParser(
         description="Substitute placeholders in a resume template based on tags",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s --tags data_scientist
-  %(prog)s --tags ai_engineer,research --input resume.tex --output resume_ai.tex
-  %(prog)s --list-tags
+    %(prog)s --tags data_scientist
+    %(prog)s --tags ai_engineer,research --input resume.tex --output resume_ai.tex
+    %(prog)s --list-tags
         """,
     )
 
@@ -348,118 +457,71 @@ Examples:
     parser.add_argument(
         "--country", type=str, help="Country name to use for folder structure and tag mapping"
     )
-    
+
     parser.add_argument(
         "--compile",
         action="store_true",
-        help="Compile the generated LaTeX file to PDF using pdflatex"
+        help="Compile the generated LaTeX file to PDF using pdflatex",
     )
 
     args = parser.parse_args()
 
-    # Initialize the substituter
-    substituter = ResumeSubstituter(args.config)
-
-    # Handle list-tags option
-    if args.list_tags:
-        substituter.list_available_tags()
-        return
-
-    # Parse tags
-    if args.tags:
-        tags = [tag.strip() for tag in args.tags.split(",") if tag.strip()]
-    else:
-        tags = []
-
-    # Handle country argument
-    country_original = ""
-    if args.country:
-        country_original = args.country
-        country_tag = substituter.map_country_to_tag(args.country)
-        # Add country tag to the beginning of tags list for priority
-        if country_tag != "default":
-            tags.insert(0, country_tag)
-
-    # Determine whether to use folder structure
-    use_folders = args.use_folders and not args.no_folders
-
-    # Determine output file name
-    if args.output:
-        output_file = args.output
-    else:
-        input_path = Path(args.input)
-        if tags and use_folders:
-            # Use folder structure pattern
-            base_output = str(input_path.with_stem(input_path.stem + "_" + "_".join(tags)))
-            output_file = substituter.create_folder_structure(tags, base_output, country_original)
-        else:
-            # Use flat file naming
-            if tags:
-                tag_suffix = "_" + "_".join(tags)
-            else:
-                tag_suffix = "_default"
-            output_file = str(input_path.with_stem(input_path.stem + tag_suffix))
-
-    # Perform substitution
-    substituter.substitute_file(args.input, output_file, tags)
-    
-    # Compile to PDF if requested
-    if args.compile:
-        compile_latex_to_pdf(output_file)
+    # Call the main processing function with parsed arguments
+    process_resume_substitution(args)
 
 
 def compile_latex_to_pdf(tex_file: str) -> None:
     """
     Compile a LaTeX file to PDF using pdflatex.
-    
-    Args:
-        tex_file: Path to the LaTeX file to compile
+
+    Parameters
+    ----------
+    tex_file : str
+        Path to the LaTeX file to compile
     """
-    import subprocess
-    from pathlib import Path
-    
     tex_path = Path(tex_file)
-    
+
     if not tex_path.exists():
-        print(f"Error: LaTeX file '{tex_file}' not found.")
+        logger.error("LaTeX file '%s' not found.", tex_file)
         return
-    
+
     # Change to the directory containing the tex file
     work_dir = tex_path.parent
     tex_filename = tex_path.name
-    
+
     try:
-        print(f"Compiling {tex_file} to PDF...")
-        result = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", tex_filename],
+        logger.info("Compiling %s to PDF...", tex_file)
+        result = subprocess.run(  # noqa: S603
+            ["pdflatex", "-interaction=nonstopmode", tex_filename],  # noqa: S607
+            check=False,
             cwd=work_dir,
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
-        
-        pdf_file = tex_path.with_suffix('.pdf')
-        
+
+        pdf_file = tex_path.with_suffix(".pdf")
+
         if result.returncode == 0 and pdf_file.exists():
-            print(f"Successfully compiled to '{pdf_file}'")
-            
+            logger.info("Successfully compiled to '%s'", pdf_file)
+
             # Clean up auxiliary files
-            aux_extensions = ['.aux', '.log', '.out', '.toc', '.fdb_latexmk', '.fls']
+            aux_extensions = [".aux", ".log", ".out", ".toc", ".fdb_latexmk", ".fls"]
             for ext in aux_extensions:
                 aux_file = tex_path.with_suffix(ext)
                 if aux_file.exists():
                     aux_file.unlink()
         else:
-            print(f"Compilation failed with return code {result.returncode}")
-            print("Error output:")
-            print(result.stderr)
-            
+            logger.error("Compilation failed with return code %d", result.returncode)
+            logger.error("Error output:")
+            logger.error(result.stderr)
+
     except subprocess.TimeoutExpired:
-        print("Compilation timed out after 60 seconds.")
+        logger.exception("Compilation timed out after 60 seconds.")
     except FileNotFoundError:
-        print("Error: pdflatex not found. Please install a LaTeX distribution.")
-    except Exception as e:
-        print(f"Error during compilation: {e}")
+        logger.exception("pdflatex not found. Please install a LaTeX distribution.")
+    except Exception:
+        logger.exception("Error during compilation")
 
 
 if __name__ == "__main__":

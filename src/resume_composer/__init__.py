@@ -1,6 +1,4 @@
-"""
-resume_composer
-"""
+"""Resume Composer Package."""
 
 try:
     from ._version import version as __version__
