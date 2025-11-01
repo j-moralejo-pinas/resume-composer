@@ -1,8 +1,8 @@
 =============
-package-name
+resume-composer
 =============
 
-This is the documentation of **package-name project**.
+This is the documentation of **resume-composer project**.
 
 Contents
 ========
