@@ -18,6 +18,16 @@ on:
         required: false
         type: string
         default: 'resume.tex'
+      name:
+        description: 'Name for resume files'
+        required: false
+        type: string
+        default: 'John Doe'
+      output_dir:
+        description: 'Output directory for generated resumes'
+        required: false
+        type: string
+        default: ''
       compile_latex:
         description: 'Whether to compile LaTeX files to PDF'
         required: false
@@ -68,6 +78,8 @@ jobs:
             --profiles-file "${{ inputs.profiles_file }}" \
             --config-file "${{ inputs.config_file }}" \
             --input-file "${{ inputs.input_file }}" \
+            --name "${{ inputs.name }}" \
+            ${{ inputs.output_dir && format('--output-dir "{0}"', inputs.output_dir) || '' }} \
             --workspace-dir . \
             --resume-composer-dir resume-composer \
             ${{ inputs.compile_latex && '--compile-latex' || '' }}

@@ -6,12 +6,14 @@ set -euo pipefail
 
 # Function to print usage
 usage() {
-    echo "Usage: $0 --profiles-file PROFILES --config-file CONFIG --input-file INPUT [--compile-latex] [--workspace-dir DIR] [--resume-composer-dir DIR]"
+    echo "Usage: $0 --profiles-file PROFILES --config-file CONFIG --input-file INPUT [--name NAME] [--output-dir DIR] [--compile-latex] [--workspace-dir DIR] [--resume-composer-dir DIR]"
     echo ""
     echo "Options:"
     echo "  --profiles-file FILE      Path to profiles file (required)"
     echo "  --config-file FILE        Path to config file (required)"
     echo "  --input-file FILE         Path to input LaTeX file (required)"
+    echo "  --name NAME               Name for resume files (default: John Doe)"
+    echo "  --output-dir DIR          Output directory for generated resumes (default: current directory)"
     echo "  --compile-latex           Compile LaTeX files to PDF (optional)"
     echo "  --workspace-dir DIR       Workspace directory (default: workspace)"
     echo "  --resume-composer-dir DIR Resume composer directory (default: resume-composer)"
@@ -26,6 +28,8 @@ COMPILE_LATEX=false
 PROFILES_FILE=""
 CONFIG_FILE=""
 INPUT_FILE=""
+NAME="John Doe"
+OUTPUT_DIR=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -40,6 +44,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --input-file)
             INPUT_FILE="$2"
+            shift 2
+            ;;
+        --name)
+            NAME="$2"
+            shift 2
+            ;;
+        --output-dir)
+            OUTPUT_DIR="$2"
             shift 2
             ;;
         --compile-latex)
@@ -141,7 +153,11 @@ generate_resumes() {
     export PYTHONPATH="$(pwd)/../$RESUME_COMPOSER_DIR/src"
 
     # Build command
-    local cmd="python -m resume_composer.generate_profiles --profiles '$PROFILES_FILE' --config '$CONFIG_FILE' --input '$INPUT_FILE'"
+    local cmd="python -m resume_composer.generate_profiles --profiles '$PROFILES_FILE' --config '$CONFIG_FILE' --input '$INPUT_FILE' --name '$NAME'"
+
+    if [[ -n "$OUTPUT_DIR" ]]; then
+        cmd="$cmd --output-dir '$OUTPUT_DIR'"
+    fi
 
     if [[ "$COMPILE_LATEX" == true ]]; then
         cmd="$cmd --compile"
