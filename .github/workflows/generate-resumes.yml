@@ -47,9 +47,6 @@ jobs:
         with:
           token: ${{ github.token }}
 
-      - name: Configure Git
-        uses: j-moralejo-pinas/ci-cd-python/actions/git-config@main
-
       - name: Checkout resume-composer repository
         uses: actions/checkout@v4
         with:
