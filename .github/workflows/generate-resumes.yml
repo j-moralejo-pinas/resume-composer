@@ -1,0 +1,69 @@
+name: Generate Resumes
+
+on:
+  workflow_call:
+    inputs:
+      profiles_file:
+        description: 'Path to the profiles file in the calling repository'
+        required: false
+        type: string
+        default: 'profiles.txt'
+      config_file:
+        description: 'Path to the config file in the calling repository'
+        required: false
+        type: string
+        default: 'config.json'
+      input_file:
+        description: 'Path to the resume template file in the calling repository'
+        required: false
+        type: string
+        default: 'resume.tex'
+      compile_latex:
+        description: 'Whether to compile LaTeX files to PDF'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate-resumes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout calling repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Configure Git
+        uses: j-moralejo-pinas/ci-cd-python/.github/actions/git-config/action.yml@main
+
+      - name: Checkout resume-composer repository
+        uses: actions/checkout@v4
+        with:
+          repository: j-moralejo-pinas/resume-composer
+          path: resume-composer
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Make script executable
+        run: chmod +x resume-composer/scripts/generate-resumes.sh
+
+      - name: Generate resumes using script
+        run: |
+          ./resume-composer/scripts/generate-resumes.sh \
+            --profiles-file "${{ inputs.profiles_file }}" \
+            --config-file "${{ inputs.config_file }}" \
+            --input-file "${{ inputs.input_file }}" \
+            --workspace-dir . \
+            --resume-composer-dir resume-composer \
+            ${{ inputs.compile_latex && '--compile-latex' || '' }}
+
+      - name: Commit and push changes
+        uses: j-moralejo-pinas/ci-cd-python/.github/actions/commit-push/action.yml@main
