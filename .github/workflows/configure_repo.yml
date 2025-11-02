@@ -1,6 +1,30 @@
 name: configure_repo
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version to use'
+        required: true
+        default: '3.13'
+        type: string
+      python_version_max:
+        description: 'Optional maximum Python version (leave empty if not needed)'
+        required: false
+        default: ''
+        type: string
+      repo_topics:
+        description: 'Space-separated repository topics'
+        required: false
+        default: 'python automation'
+        type: string
+      workflow:
+        description: 'Development workflow to use'
+        required: true
+        default: 'gitflow'
+        type: choice
+        options:
+          - gitflow
+          - github_flow
 
 permissions:
   contents: write  # Need write permission to commit and push changes
@@ -11,11 +35,6 @@ jobs:
     # Optional safety gate. Keep if you stored ADMIN_TOKEN in env "prod".
     environment: main
     runs-on: ubuntu-latest
-
-    env:
-      PYTHON_VERSION: "3.13"
-      PYTHON_VERSION_MAX: ""  # Optional maximum Python version (empty by default)
-      REPO_TOPICS: "python automation"  # Space-separated topics
 
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +51,10 @@ jobs:
         id: init
         env:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          PYTHON_VERSION: ${{ inputs.python_version }}
+          PYTHON_VERSION_MAX: ${{ inputs.python_version_max }}
+          REPO_TOPICS: ${{ inputs.repo_topics }}
+          WORKFLOW: ${{ inputs.workflow }}
         run: |
           set -euo pipefail
 
@@ -45,10 +68,11 @@ jobs:
           echo "Python version: $PYTHON_VERSION"
           echo "Python max version: ${PYTHON_VERSION_MAX:-'Not specified'}"
           echo "Topics: ${REPO_TOPICS:-'Not specified'}"
+          echo "Workflow: ${WORKFLOW:-'Not specified'}"
 
-          # Run the init_project.sh script with repo name, description, Python versions, and topics
+          # Run the init_project.sh script with repo name, description, Python versions, topics, and workflow
           chmod +x ./init_project.sh
-          ./init_project.sh "$REPO_NAME" "$REPO_DESC" "$PYTHON_VERSION" "$PYTHON_VERSION_MAX" "$REPO_TOPICS"
+          ./init_project.sh "$REPO_NAME" "$REPO_DESC" "$PYTHON_VERSION" "$PYTHON_VERSION_MAX" "$REPO_TOPICS" "$WORKFLOW"
 
           # Configure git
           git config user.name "github-actions[bot]"
@@ -91,6 +115,7 @@ jobs:
       - name: Topics
         env:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          REPO_TOPICS: ${{ inputs.repo_topics }}
         run: |
           set -euo pipefail
           # Use REPO_SLUG from initialization step
@@ -124,7 +149,25 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             --input <(jq -n '{default_workflow_permissions:"write"}')
 
-      # 5) Rulesets (correct schema). Never call /repos//rulesets again.
+      # 5) Get workflow type from pyproject.toml
+      - name: Get workflow type
+        id: workflow-type
+        run: |
+          set -euo pipefail
+
+          # Extract workflow value from [tool.cicd] section
+          WORKFLOW_TYPE=$(grep -A 10 "^\[tool\.cicd\]" pyproject.toml | grep "^workflow = " | sed 's/^workflow = "\([^"]*\)".*/\1/' | head -1)
+
+          # If workflow is empty or not found, default to gitflow
+          if [[ -z "$WORKFLOW_TYPE" ]]; then
+            echo "⚠ Warning: workflow not found in pyproject.toml [tool.cicd] section, defaulting to 'gitflow'"
+            WORKFLOW_TYPE="gitflow"
+          fi
+
+          echo "✓ Found workflow type: $WORKFLOW_TYPE"
+          echo "workflow_type=$WORKFLOW_TYPE" >> "$GITHUB_OUTPUT"
+
+      # 6) Rulesets (correct schema). Never call /repos//rulesets again.
       - name: Create or update rulesets
         env:
           GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
@@ -132,6 +175,7 @@ jobs:
           set -euo pipefail
 
           REPO_SLUG="${REPO_SLUG:-$GITHUB_REPOSITORY}"
+          WORKFLOW_TYPE="${{ steps.workflow-type.outputs.workflow_type }}"
           API=(-H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28")
 
           find_ruleset_id_by_name() {
@@ -197,10 +241,30 @@ jobs:
               --input <(printf '%s' "$BODY")
           }
 
-          # Main: Merge only, checks: check-source-branch, format, code-quality, test
-          replace_ruleset "Main" "main"  "$(jq -n '["merge"]')" \
-            "call-reusable / check-source-branch" "call-reusable / format" "call-reusable / code-quality" "call-reusable / test"
+          echo "Setting up rulesets for workflow type: $WORKFLOW_TYPE"
 
-          # Dev: Merge + Squash, checks: format, test
-          replace_ruleset "Dev"  "dev"   "$(jq -n '["merge","squash"]')" \
-            "call-reusable / format" "call-reusable / test"
+          if [[ "$WORKFLOW_TYPE" == "gitflow" ]]; then
+            echo "Configuring rulesets for GitFlow workflow"
+
+            # Main: Merge only, checks: check-source-branch, format, code-quality, test
+            replace_ruleset "Main" "main"  "$(jq -n '["merge"]')" \
+              "call-reusable / check-source-branch" "call-reusable / format" "call-reusable / code-quality" "call-reusable / test"
+
+            # Dev: Merge + Squash, checks: format, test
+            replace_ruleset "Dev"  "dev"   "$(jq -n '["merge","squash"]')" \
+              "call-reusable / format" "call-reusable / test"
+
+          else
+            echo "Configuring rulesets for GitHub Flow workflow"
+
+            # Main: Allow all merge types, checks: check-source-branch, format, code-quality, test
+            replace_ruleset "Main" "main"  "$(jq -n '["merge","squash","rebase"]')" \
+              "call-reusable / check-source-branch" "call-reusable / format" "call-reusable / code-quality" "call-reusable / test"
+
+            # Remove any existing Dev ruleset since it's not needed for GitHub Flow
+            DEV_RULESET_ID=$(find_ruleset_id_by_name "Dev" || true)
+            if [ -n "${DEV_RULESET_ID:-}" ]; then
+              echo "Removing Dev ruleset (not needed for GitHub Flow)"
+              gh api -i -X DELETE "/repos/$REPO_SLUG/rulesets/$DEV_RULESET_ID" "${API[@]}" || true
+            fi
+          fi
