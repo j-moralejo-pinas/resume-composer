@@ -11,9 +11,9 @@ def create_test_config(tmp_path: Path, config_data: dict[str, Any] | None = None
     if config_data is None:
         config_data = {
             "1": {"default": "John Doe", "academic": "Dr. John Doe"},
-            "2": {"default": "Engineer", "data_scientist": "Data Scientist"}
+            "2": {"default": "Engineer", "data_scientist": "Data Scientist"},
         }
-    
+
     config_file = tmp_path / "config.json"
     config_file.write_text(json.dumps(config_data))
     return config_file
@@ -23,7 +23,7 @@ def create_test_template(tmp_path: Path, content: str | None = None) -> Path:
     """Create a test resume template file."""
     if content is None:
         content = "Hello <1>, you are a <2>."
-    
+
     template_file = tmp_path / "template.tex"
     template_file.write_text(content)
     return template_file
@@ -33,7 +33,7 @@ def create_test_profiles(tmp_path: Path, content: str | None = None) -> Path:
     """Create a test profiles file."""
     if content is None:
         content = "USA,UK\ndata_scientist,finance\nresearcher,academic"
-    
+
     profiles_file = tmp_path / "profiles.txt"
     profiles_file.write_text(content)
     return profiles_file

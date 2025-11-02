@@ -118,8 +118,11 @@ engineer,general
         with pytest.raises(SystemExit):
             read_profiles_file(str(profiles_file))
 
-    def test_read_profiles_file_empty_profile_line(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_read_profiles_file_empty_profile_line(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test reading profiles file with empty profile line."""
+        caplog.set_level(logging.WARNING)
         profiles_content = """USA,UK,Germany
 data_scientist,finance
 
@@ -136,8 +139,7 @@ researcher,academic"""
             ["researcher", "academic"]
         ]
         
-        captured = capsys.readouterr()
-        assert "Warning: Empty profile on line" in captured.out
+        assert "Empty profile on line 3, skipping." in caplog.text
 
 
 class TestGenerateResume:
@@ -201,16 +203,16 @@ class TestMainFunction:
 
     @patch("resume_composer.generate_profiles.read_profiles_file")
     @patch("sys.argv", ["generate_profiles.py", "--profiles", "test.txt", "--dry-run"])
-    def test_main_dry_run(self, mock_read: Mock, capsys: pytest.CaptureFixture[str]) -> None:
+    def test_main_dry_run(self, mock_read: Mock, caplog: pytest.LogCaptureFixture) -> None:
         """Test main function with dry-run option."""
+        caplog.set_level(logging.INFO)
         mock_read.return_value = (["USA", "UK"], [["data_scientist"], ["researcher"]])
         
         main()
         
-        captured = capsys.readouterr()
-        assert "Dry run - showing combinations that would be generated:" in captured.out
-        assert "USA: data_scientist" in captured.out
-        assert "UK: researcher" in captured.out
+        assert "Dry run - showing combinations that would be generated:" in caplog.text
+        assert "USA: data_scientist" in caplog.text
+        assert "UK: researcher" in caplog.text
 
     @patch("resume_composer.generate_profiles.read_profiles_file")
     @patch("sys.argv", ["generate_profiles.py", "--profiles", "test.txt"])
