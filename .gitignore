@@ -212,6 +212,6 @@ pyrightconfig.local.json
 # Version file
 **/_version.py
 *.md
-config_named.json
+config.json
 resume.tex*
 *.txt

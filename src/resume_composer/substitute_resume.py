@@ -191,12 +191,17 @@ class ResumeSubstituter:
         return "default"
 
     def create_folder_structure(
-        self, tags: list[str], base_output_file: str, country_original: str = ""
+        self,
+        tags: list[str],
+        base_output_file: str,
+        country_original: str = "",
+        output_dir: str = "",
+        name: str = "",
     ) -> str:
         """
         Create folder structure based on tags and return the full output path.
 
-        Pattern: {country}/base_{tags_concatenated_except_country}/{position}
+        Pattern: {output_dir}/{country}/_{all_tags_except_country}/Position/
 
         Parameters
         ----------
@@ -206,58 +211,62 @@ class ResumeSubstituter:
             Base output filename
         country_original : str, default=""
             Original country name for folder structure
+        output_dir : str, default=""
+            Base output directory to contain all country folders
+        name : str, default=""
+            Person's name for filename
 
         Returns
         -------
         str
             Full path including folder structure
         """
-        # Define country and position tags
+        # Define country tags
         country_tags = {"uk", "usa", "switzerland", "europe", "spain"}
-        position_tags = {
-            "engineer",
-            "researcher",
-            "data_scientist",
-            "developer",
-            "software_engineer",
-            "software_developer",
-        }
 
-        # Extract country and position from tags
+        # Extract country from tags and get all other tags
         country = None
-        position = None
-        other_tags = []
+        non_country_tags = []
 
         for tag in tags:
             if tag in country_tags:
                 country = tag
-            elif tag in position_tags:
-                position = tag
             else:
-                other_tags.append(tag)
+                non_country_tags.append(tag)
 
         # Use defaults if not found
         if not country:
             country = "default"
-        if not position:
-            position = "general"
 
         # Create folder structure
-        base_name = Path(base_output_file).stem
         extension = Path(base_output_file).suffix
 
         # Build the path components
-        folder_name = f"_base_{'_'.join(other_tags)}" if other_tags else "_base"
+        # Use all non-country tags for folder name
+        folder_name = f"_{'_'.join(non_country_tags)}" if non_country_tags else "_general"
 
         # Use original country name for folder, or fall back to tag-based country
         folder_country = country_original if country_original else country
-        folder_path = Path(folder_country) / folder_name / "Position"
+
+        # Build the full folder path with optional output directory
+        if output_dir:
+            folder_path = Path(output_dir) / folder_country / folder_name / "Position"
+        else:
+            folder_path = Path(folder_country) / folder_name / "Position"
 
         # Create directories if they don't exist
         folder_path.mkdir(parents=True, exist_ok=True)
 
+        # Create filename based on name if provided, otherwise use base_output_file
+        if name:
+            filename = f"resume_{name}{extension}"
+        else:
+            # Fallback to original behavior
+            base_name = Path(base_output_file).stem
+            filename = f"{base_name}{extension}"
+
         # Create the full output path
-        output_path = folder_path / f"{base_name}{extension}"
+        output_path = folder_path / filename
 
         return str(output_path)
 
@@ -382,7 +391,11 @@ def process_resume_substitution(args: argparse.Namespace) -> None:
         if tags and use_folders:
             # Use folder structure pattern
             base_output = str(input_path.with_stem(input_path.stem + "_" + "_".join(tags)))
-            output_file = substituter.create_folder_structure(tags, base_output, country_original)
+            output_dir = getattr(args, "output_dir", None) or ""
+            name = getattr(args, "name", "") or ""
+            output_file = substituter.create_folder_structure(
+                tags, base_output, country_original, output_dir, name
+            )
         else:
             # Use flat file naming
             tag_suffix = "_" + "_".join(tags) if tags else "_default"
@@ -459,9 +472,19 @@ Examples:
     )
 
     parser.add_argument(
+        "--name", type=str, help="Name to use in the output filename"
+    )
+
+    parser.add_argument(
         "--compile",
         action="store_true",
         help="Compile the generated LaTeX file to PDF using pdflatex",
+    )
+
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="Output directory to contain all generated country folders",
     )
 
     args = parser.parse_args()

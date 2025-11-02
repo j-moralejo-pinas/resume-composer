@@ -148,7 +148,7 @@ class TestResumeSubstituter:
                 ["usa", "data_scientist"], "resume.tex", "USA"
             )
 
-            assert "USA/_base/Position/resume.tex" in result
+            assert "USA/_data_scientist/Position/resume.tex" in result
             assert Path(result).parent.exists()
         finally:
             os.chdir(original_cwd)
@@ -170,7 +170,57 @@ class TestResumeSubstituter:
                 ["usa", "data_scientist", "finance"], "resume.tex", "USA"
             )
 
-            assert "USA/_base_finance/Position/resume.tex" in result
+            assert "USA/_data_scientist_finance/Position/resume.tex" in result
+            assert Path(result).parent.exists()
+        finally:
+            os.chdir(original_cwd)
+
+    def test_create_folder_structure_with_name(self, tmp_path: Path) -> None:
+        """Test folder structure creation with custom name."""
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps({}))
+
+        substituter = ResumeSubstituter(str(config_file))
+
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+
+        try:
+            result = substituter.create_folder_structure(
+                ["uk", "researcher", "academic"], "resume.tex", "UK", "", "John_Doe"
+            )
+
+            assert "UK/_researcher_academic/Position/resume_John_Doe.tex" in result
+            assert Path(result).parent.exists()
+        finally:
+            os.chdir(original_cwd)
+
+    def test_create_folder_structure_with_output_dir(self, tmp_path: Path) -> None:
+        """Test folder structure creation with output directory."""
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps({}))
+
+        substituter = ResumeSubstituter(str(config_file))
+
+        import os
+
+        original_cwd = os.getcwd()
+        os.chdir(tmp_path)
+
+        try:
+            output_dir = "generated_resumes"
+            result = substituter.create_folder_structure(
+                ["switzerland", "developer", "ai"],
+                "resume.tex",
+                "Switzerland",
+                output_dir,
+                "Jane_Smith",
+            )
+
+            expected_path = f"{output_dir}/Switzerland/_developer_ai/Position/resume_Jane_Smith.tex"
+            assert expected_path in result
             assert Path(result).parent.exists()
         finally:
             os.chdir(original_cwd)
@@ -261,7 +311,7 @@ class TestResumeSubstituter:
         caplog.set_level(logging.INFO)
         config_data = {
             "1": {"default": "John", "academic": "Dr. John", "professional": "John Doe"},
-            "2": {"default": "Engineer", "data_scientist": "Data Scientist"}
+            "2": {"default": "Engineer", "data_scientist": "Data Scientist"},
         }
         config_file = tmp_path / "config.json"
         config_file.write_text(json.dumps(config_data))

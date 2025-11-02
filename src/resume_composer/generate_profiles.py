@@ -113,7 +113,14 @@ def read_profiles_file(profiles_file: str) -> tuple[list[str], list[list[str]]]:
 
 
 def generate_resume(
-    country: str, tags: list[str], config: str, input_file: str, *, compile_pdf: bool
+    country: str,
+    tags: list[str],
+    config: str,
+    input_file: str,
+    *,
+    compile_pdf: bool,
+    output_dir: str = "",
+    name: str = "",
 ) -> None:
     """
     Generate a single resume for a country and tag combination.
@@ -130,6 +137,10 @@ def generate_resume(
         Path to input LaTeX file
     compile_pdf : bool
         Whether to compile to PDF
+    output_dir : str, default=""
+        Output directory to contain all country folders
+    name : str, default=""
+        Name to use in the output filename
     """
     # Create arguments object similar to argparse output
     args = Namespace(
@@ -142,6 +153,8 @@ def generate_resume(
         list_tags=False,
         use_folders=True,
         no_folders=False,
+        output_dir=output_dir,
+        name=name,
     )
 
     # Call the substitution function directly
@@ -207,7 +220,18 @@ Examples:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be generated without actually generating files",
+        help="Show what would be generated without actually generate files",
+    )
+
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="",
+        help="Output directory to contain all generated country folders (default: current dir)",
+    )
+
+    parser.add_argument(
+        "--name", type=str, default="", help="Name to use in the output filename"
     )
 
     args = parser.parse_args()
@@ -245,7 +269,15 @@ Examples:
 
     for country in countries:
         for profile in profiles:
-            generate_resume(country, profile, args.config, args.input, compile_pdf=args.compile)
+            generate_resume(
+                country,
+                profile,
+                args.config,
+                args.input,
+                compile_pdf=args.compile,
+                output_dir=args.output_dir,
+                name=args.name,
+            )
             success_count += 1
 
     logger.info("Completed processing %d/%d combinations", success_count, total_combinations)
