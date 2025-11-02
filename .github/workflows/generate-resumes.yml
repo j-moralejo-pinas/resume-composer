@@ -48,7 +48,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Configure Git
-        uses: j-moralejo-pinas/ci-cd-python/.github/actions/git-config/action.yml@main
+        uses: j-moralejo-pinas/ci-cd-python/actions/git-config/action.yml@main
 
       - name: Checkout resume-composer repository
         uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
             ${{ inputs.compile_latex && '--compile-latex' || '' }}
 
       - name: Commit and push changes
-        uses: j-moralejo-pinas/ci-cd-python/.github/actions/commit-push/action.yml@main
+        uses: j-moralejo-pinas/ci-cd-python/actions/commit-push/action.yml@main
         with:
           pat: ${{ github.token }}
           message: ${{ inputs.commit_message }}
