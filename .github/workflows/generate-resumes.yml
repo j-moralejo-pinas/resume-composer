@@ -82,6 +82,12 @@ jobs:
             --resume-composer-dir resume-composer \
             ${{ inputs.compile_latex && '--compile-latex' || '' }}
 
+      - name: Restore origin to caller repo
+        run: |
+          git remote set-url origin "https://github.com/${{ github.repository }}.git"
+          git fetch origin
+          echo "✅ Restored origin to caller repo: $(git remote get-url origin)"
+
       - name: Commit and push changes
         uses: j-moralejo-pinas/ci-cd-python/actions/commit-push@main
         with:
