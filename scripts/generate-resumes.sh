@@ -144,6 +144,23 @@ verify_files() {
     echo "✅ All input files verified successfully"
 }
 
+# Function to clean output directory
+clean_output_directory() {
+    if [[ -n "$OUTPUT_DIR" ]]; then
+        cd "$WORKSPACE_DIR"
+        if [[ -d "$OUTPUT_DIR" ]]; then
+            echo "🧹 Removing existing output directory: $OUTPUT_DIR"
+            rm -rf "$OUTPUT_DIR"
+            echo "✅ Output directory cleaned successfully"
+        else
+            echo "ℹ️ Output directory '$OUTPUT_DIR' does not exist, nothing to clean"
+        fi
+        cd - > /dev/null
+    else
+        echo "ℹ️ No output directory specified, skipping cleanup"
+    fi
+}
+
 # Function to generate resumes
 generate_resumes() {
     echo "🚀 Generating resumes..."
@@ -208,6 +225,7 @@ main() {
     install_dependencies
     install_latex
     verify_files
+    clean_output_directory
     generate_resumes
     list_generated_files
     cleanup
