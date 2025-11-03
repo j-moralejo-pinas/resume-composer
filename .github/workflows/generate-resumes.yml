@@ -85,6 +85,6 @@ jobs:
       - name: Commit and push changes
         uses: j-moralejo-pinas/ci-cd-python/actions/commit-push@main
         with:
-          pat: ${{ github.token }}
+          pat: ${{ secrets.GITHUB_TOKEN }}
           message: ${{ inputs.commit_message }}
           labels: ${{ inputs.commit_labels }}
