@@ -1,0 +1,28 @@
+name: Generate Resumes on Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'profiles.txt'
+      - 'config.json'
+      - 'resume.tex'
+      - '!**/resume_*.tex'  # Exclude generated resume files
+      - '!**/resume_*.pdf'  # Exclude generated PDF files
+
+jobs:
+  generate-resumes:
+    permissions:
+      contents: write
+    uses: j-moralejo-pinas/resume-composer/.github/workflows/generate-resumes.yml@main
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+    with:
+      profiles_file: 'profiles.txt'
+      config_file: 'config.json'
+      input_file: 'resume.tex'
+      name: 'Your_Name'  # Replace with your actual name
+      compile_latex: true
+      commit_message: 'Generate resumes with resume-composer'
+      commit_labels: 'resume-generator'
+      output_dir: 'generated_resumes'

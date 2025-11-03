@@ -82,11 +82,11 @@ Development Workflow
 Creating a Feature Branch
 --------------------------
 
-1. Make sure you're on the dev branch and it's up to date:
+1. Make sure you're on the main branch and it's up to date:
 
 .. code-block:: bash
 
-    git checkout dev
+    git checkout main
     git pull
 
 2. Create a new feature branch:
@@ -110,60 +110,53 @@ When running code during development, use:
 
 .. code-block:: bash
 
-    PYTHONPATH='/path/to/resume-composer/src' python your_script.py
+    PYTHONPATH='/path/to/package-name/src' python your_script.py
 
 Branching Model and Workflow
 ============================
 
-This project follows a structured Gitflow branching model to maintain code quality and enable collaborative development.
+This project follows a structured GitHub-Flow branching model to maintain code quality and enable collaborative development.
 
 Branch Types
 ------------
 
-**main**
-~~~~~~~~
+main
+~~~~
 - The production-ready branch
 - Contains stable, tested code
 - Protected branch requiring pull request reviews
-- Only accepts merges from ``dev`` or ``hotfix`` branches
+- Only accepts merges from ``feature``, ``hotfix``, ``bugfix``, ``fix``,  and ``meta`` branches
 
-**dev**
-~~~~~~~
-- The integration branch for ongoing development
-- Contains the latest development features
-- All feature and bugfix branches merge here first
-- Regularly merged into ``main`` when stable
-
-**feature/***
-~~~~~~~~~~~~~
+feature/\*
+~~~~~~~~~
 - Created for new features or enhancements
-- Branched from ``dev``
+- Branched from ``main``
 - Naming convention: ``feature/feature-name`` or ``feature/issue-number-description``
-- Merged back into ``dev`` via pull request
+- Merged back into ``main`` via pull request
 
-**release/***
-~~~~~~~~~~~~~
-- Created for preparing a new production release
-- Branched from ``dev``
-- Naming convention: ``release/version-number``
-- Used for final testing and bug fixes before merging into ``main``
-
-**bugfix/***
-~~~~~~~~~~~~
+bugfix/\* or fix/\*
+~~~~~~~~~~~~~~~~~
 - Created for non-urgent bug fixes
-- Branched from ``dev``
+- Branched from ``main``
 - Naming convention: ``bugfix/bug-description`` or ``bugfix/issue-number-description``
-- Merged back into ``dev`` via pull request
+- Merged back into ``main`` via pull request
 
-**hotfix/***
-~~~~~~~~~~~~
+hotfix/\*
+~~~~~~~~
 - Created for urgent production fixes
 - Branched from ``main``
 - Naming convention: ``hotfix/critical-issue-description``
-- Merged directly into ``main`` and then back-merged into ``dev``
+- Merged back into ``main`` via pull request
 
-**meta/***
-~~~~~~~~~~~~
+major/\*
+~~~~~~~
+- Created for major changes that may introduce breaking changes
+- Branched from ``main`` or a ``feature/`` branch that introduced breaking changes
+- Naming convention: ``major/feature-description``
+- Merged back into ``main`` via pull request
+
+meta/\*
+~~~~~~
 - Created for non-code changes (documentation, CI/CD, etc.)
 - Branched from ``main``
 - Naming convention: ``meta/change-description``
@@ -172,74 +165,26 @@ Branch Types
 Merge Workflows
 ---------------
 
-**Feature/Bugfix → Dev**
-~~~~~~~~~~~~~~~~~~~~~~~~
+Branch → Main
+~~~~~~~~~~~~~
 
-1. Rebase ``dev`` into your feature/bugfix branch:
+1. Merge ``main`` into your branch:
 
 .. code-block:: bash
 
-    git checkout feature/your-feature
+    git checkout your-branch
     git fetch origin
-    git rebase origin/dev
+    git rebase origin/main
 
-2. Create a pull request from ``feature/your-feature`` to ``dev``
-3. Use **squash commit** or **squash and merge** to maintain clean commit history
+2. Create a pull request from ``your-branch`` to ``main``
+3. Use **merge commit** to keep track of all changes or **squash and merge** or **rebase and merge** for a clean commit history
 4. Delete the feature branch after successful merge
-
-**Dev → Release → Main**
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. When ready for a release, create a release branch from ``dev``:
-
-.. code-block:: bash
-
-    git checkout dev
-    git pull origin dev
-    git checkout -b release/x.y.z
-    git push origin release/x.y.z
-
-2. Perform final testing and bug fixes on the release branch
-3. Create a pull request from ``release/x.y.z`` to ``main``
-4. Use **squash commit** for a clean release commit
-5. After merge, CI pipeline will tag the release, publish packages, deploy documentation and merge ``main`` back into ``dev`` to keep branches synchronized
-
-**Hotfix → Main**
-~~~~~~~~~~~~~~~~~
-
-1. Rebase ``main`` into your hotfix branch:
-
-.. code-block:: bash
-
-    git checkout hotfix/critical-fix
-    git fetch origin
-    git rebase origin/main
-
-2. Create a pull request from ``hotfix/critical-fix`` to ``main``
-3. Use **squash and merge** for clean hotfix commits
-4. After merge, CI pipeline will tag the hotfix release, publish packages, deploy documentation and merge ``main`` back into ``dev`` to keep branches synchronized
-
-**Meta → Main**
-~~~~~~~~~~~~~~~
-
-1. Rebase ``main`` into your meta branch:
-
-.. code-block:: bash
-
-    git checkout meta/your-meta-change
-    git fetch origin
-    git rebase origin/main
-
-2. Create a pull request from ``meta/your-meta-change`` to ``main``
-3. Use **squash and merge** for clean meta commits
-4. After merge, CI pipeline will deploy documentation and merge ``main`` back into ``dev`` to keep branches synchronized
 
 Branch Protection Rules
 -----------------------
 
-- **main**: Requires pull request reviews, status checks must pass
-- **dev**: Requires pull request reviews, status checks must pass
-- Direct pushes to ``main`` and ``dev`` are prohibited
+- ``main``: Requires pull request reviews, status checks must pass
+- Direct pushes to ``main`` are prohibited
 - All branches must be up-to-date before merging
 
 Workflow Examples
@@ -254,14 +199,14 @@ Workflow Examples
     git pull origin dev
 
     # Create feature branch
-    git checkout -b feature/user-authentication
+    git checkout -b feature/your-feature-name
 
     # Make changes and commit
     git add .
-    git commit -m "feat: implement user authentication system"
+    git commit -m "feat: implement your-feature-name"
 
     # Push and create PR
-    git push origin feature/user-authentication
+    git push origin feature/your-feature-name
 
 **Preparing for Merge**
 
@@ -272,7 +217,7 @@ Workflow Examples
     git rebase origin/dev
 
     # Resolve conflicts if any, then force push
-    git push --force-with-lease origin feature/user-authentication
+    git push --force-with-lease origin feature/your-feature-name
 
 Code Standards
 ==============
@@ -290,7 +235,7 @@ We use **pyupgrade** to automatically upgrade Python syntax to use modern featur
     pyupgrade --py312-plus src/**/*.py
 
     # Upgrade specific files
-    pyupgrade --py312-plus src/resume_composer/specific_module.py
+    pyupgrade --py312-plus src/package_name/specific_module.py
 
     # Upgrade all Python files recursively
     find src -name "*.py" -exec pyupgrade --py312-plus {} +
@@ -316,7 +261,7 @@ We use **docformatter** to automatically format docstrings:
     docformatter --check src/**/*.py
 
     # Format specific files
-    docformatter --in-place src/resume_composer/specific_module.py
+    docformatter --in-place src/package_name/specific_module.py
 
 Docformatter ensures:
 
@@ -352,7 +297,7 @@ We use **pydoclint** to ensure docstring quality and consistency:
     pydoclint src/
 
     # Check specific files
-    pydoclint src/resume_composer/specific_module.py
+    pydoclint src/package_name/specific_module.py
 
 Pydoclint helps ensure that:
 
@@ -372,7 +317,7 @@ We use **Pyright** for static type checking:
     pyright
 
     # Check specific files
-    pyright src/resume_composer/specific_module.py
+    pyright src/package_name/specific_module.py
 
 Pyright is configured in ``pyrightconfig.json`` and helps catch type-related errors before runtime.
 
@@ -442,7 +387,7 @@ Example of well-formatted code:
     import numpy as np
     import pandas as pd
 
-    from resume_composer import fun
+    from package_name import fun
 
     def calculate_statistics(data: List[float]) -> Dict[str, float]:
         """Calculate basic statistics for a list of numbers.
@@ -483,7 +428,7 @@ Running Tests
     pytest --cov=src
 
     # Run specific test file
-    pytest tests/resume_composer/test_specific_module.py
+    pytest tests/package_name/test_specific_module.py
 
     # Run tests matching a pattern
     pytest -k "test_pattern"
@@ -505,7 +450,7 @@ Example test:
     import pytest
     import numpy as np
 
-    from resume_composer import fun
+    from package_name import fun
 
 
     class TestFeature:
@@ -623,7 +568,7 @@ Understanding the codebase structure will help you contribute effectively:
 
     resume-composer/
     ├── src/                        # Source code
-    │   ├── resume_composer/           # Main package
+    │   ├── package_name/           # Main package
     │   └── other_package/          # Additional package
     ├── tests/                      # Test suite
     ├── docs/                       # Documentation

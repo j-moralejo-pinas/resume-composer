@@ -15,6 +15,7 @@ Before installing the project, ensure you have the following requirements:
 * **Python 3.13** (required for this project)
 * **Git** for cloning the repository
 * **Internet connection** for downloading dependencies
+* **Latex distribution** for PDF generation
 
 User Installation
 =================
@@ -58,45 +59,11 @@ Quick Start
 
     python -c "import resume_composer; print('Installation successful!')"
 
-Docker Installation (Alternative)
----------------------------------
+5. **Install Latex Distribution**: Ensure you have a Latex distribution installed for PDF generation. Linux packages include:
 
-If you prefer to use Docker instead of a local Python installation, you can run the project in a containerized environment.
-
-Prerequisites for Docker
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-* **Docker** and **Docker Compose** installed on your system
-* **Git** for cloning the repository
-
-Docker Setup
-~~~~~~~~~~~~
-
-1. **Clone the Repository**
-
-.. code-block::
-
-    git clone https://github.com/j-moralejo-pinas/resume-composer.git
-    cd resume-composer
-
-2. **Build the Docker Image**: Build the application using Docker Compose. This will create a Docker image with all necessary dependencies pre-installed
-
-.. code-block::
-
-    docker-compose build
-
-3. **Verify Docker Installation**: Test that the Docker setup works
-
-.. code-block::
-
-    docker-compose run --rm app python -c "import resume_composer; print('Docker installation successful!')"
-
-**Docker Benefits**
-
-* **Isolated environment** - No conflicts with your system Python
-* **Consistent setup** - Same environment across different machines
-* **Easy cleanup** - Remove containers when done
-* **Pre-configured dependencies** - All system libraries included
+    - `texlive`
+    - `texlive-latex-extra`
+    - `texlive-fonts-recommended`
 
 Developer Installation
 ======================
@@ -138,13 +105,19 @@ Development Setup
 
     pip install -e ".[dev,docs]"
 
-4. **Set Up Pre-commit Hooks**: Install pre-commit hooks to ensure code quality
+4. **Install Latex Distribution**: Ensure you have a Latex distribution installed for PDF generation. Linux packages include:
+
+    - `texlive`
+    - `texlive-latex-extra`
+    - `texlive-fonts-recommended`
+
+5. **Set Up Pre-commit Hooks**: Install pre-commit hooks to ensure code quality
 
 .. code-block::
 
     pre-commit install
 
-5. **Configure Type Checking**: Link your development environment to Pyright for proper type checking. Create a ``pyrightconfig.local.json`` file in the project root
+6. **Configure Type Checking**: Link your development environment to Pyright for proper type checking. Create a ``pyrightconfig.local.json`` file in the project root
 
 .. code-block::
 
@@ -155,7 +128,7 @@ Development Setup
 
 .. [#f1] Replace ``/path/to/your/conda/envs`` with your actual conda environments path (e.g., ``/home/username/miniconda3/envs`` or ``/home/username/micromamba/envs``).
 
-6. **Configure Environment**: Set the ``PYTHONPATH`` environment variable or add it to your shell profile to include the source directory (``~/.bashrc``, ``~/.zshrc``, etc.)
+7. **Configure Environment**: Set the ``PYTHONPATH`` environment variable or add it to your shell profile to include the source directory (``~/.bashrc``, ``~/.zshrc``, etc.)
 
 .. code-block::
 
@@ -163,7 +136,7 @@ Development Setup
 
     Or add this to your shell profile (``~/.bashrc``, ``~/.zshrc``, etc.).
 
-7. **Verify Installation**: Test that the development installation was successful
+8. **Verify Installation**: Test that the development installation was successful
 
 .. code-block::
 
@@ -198,20 +171,6 @@ If you have issues with virtual environments, try
     # For venv environments
     which python  # Check which Python you're using
     pip list  # Check installed packages
-
-**Docker Issues**
-
-If Docker commands fail
-
-.. code-block::
-
-    # Check Docker is running
-    docker --version
-    docker-compose --version
-
-    # Check Docker permissions (Linux)
-    sudo usermod -aG docker $USER
-    # Then log out and back in
 
 **Getting Help**
 

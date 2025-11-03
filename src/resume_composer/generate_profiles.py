@@ -230,9 +230,7 @@ Examples:
         help="Output directory to contain all generated country folders (default: current dir)",
     )
 
-    parser.add_argument(
-        "--name", type=str, default="", help="Name to use in the output filename"
-    )
+    parser.add_argument("--name", type=str, default="", help="Name to use in the output filename")
 
     args = parser.parse_args()
 

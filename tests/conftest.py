@@ -22,23 +22,20 @@ def sample_config_data() -> dict[str, dict[str, str]]:
             "academic": "Dr. John Doe",
             "professional": "John Doe, Ph.D.",
             "usa": "John Doe USA",
-            "uk": "John Doe UK"
+            "uk": "John Doe UK",
         },
         "2": {
             "default": "Software Engineer",
             "data_scientist": "Data Scientist",
             "researcher": "Research Scientist",
-            "academic": "Professor of Computer Science"
+            "academic": "Professor of Computer Science",
         },
-        "name": {
-            "default": "Jane Smith",
-            "academic": "Dr. Jane Smith"
-        },
+        "name": {"default": "Jane Smith", "academic": "Dr. Jane Smith"},
         "title": {
             "default": "Engineer",
             "academic": "Professor",
-            "data_scientist": "Data Scientist"
-        }
+            "data_scientist": "Data Scientist",
+        },
     }
 
 
@@ -68,7 +65,7 @@ def sample_resume_template(tmp_path: Path) -> Path:
 This is a sample resume for <name> with title <title>.
 
 \\end{document}"""
-    
+
     template_file = tmp_path / "resume_template.tex"
     template_file.write_text(template_content)
     return template_file
@@ -81,7 +78,7 @@ def sample_profiles_file(tmp_path: Path) -> Path:
 data_scientist,finance
 researcher,academic
 engineer,general"""
-    
+
     profiles_file = tmp_path / "profiles.txt"
     profiles_file.write_text(profiles_content)
     return profiles_file
@@ -92,16 +89,16 @@ def sample_data_dir(tmp_path: Path) -> Path:
     """Create a complete sample data directory structure."""
     data_dir = tmp_path / "data"
     data_dir.mkdir()
-    
+
     # Copy actual sample files if they exist
     project_root = Path(__file__).parent.parent
     source_data_dir = project_root / "data"
-    
+
     if source_data_dir.exists():
         for file_path in source_data_dir.glob("*"):
             if file_path.is_file():
                 shutil.copy(file_path, data_dir)
-    
+
     return data_dir
 
 
@@ -110,7 +107,7 @@ def change_test_dir(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPa
     """Change to the test directory for each test."""
     if request.node.get_closest_marker("no_chdir"):
         return
-    
+
     # Use tmp_path if available, otherwise use current directory
     if hasattr(request, "getfixturevalue"):
         try:

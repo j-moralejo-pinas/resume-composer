@@ -1,6 +1,6 @@
-=============
+===============
 resume-composer
-=============
+===============
 
 .. image:: https://img.shields.io/badge/python-3.13+-blue.svg
     :target: https://www.python.org/downloads/
@@ -9,69 +9,155 @@ resume-composer
 .. image:: https://img.shields.io/badge/license-MIT-green.svg
     :alt: License
 
-A comprehensive boilerplate for Python projects with modern CI/CD setup, testing, documentation, and development tools.
+A configurable resume generator that assembles tailored versions of a base resume using predefined customization sets for different roles, companies, or focuses.
 
-**Quick Start**
----------------
-1. Create an environment in github called `main` and set the following features:
-    - Required reviewers: my-name
-    - Allow admins to bypass: disabled
-    - Deployment branches and tags: main
-    - Environment secrets:
-        - ``ADMIN_TOKEN``: Administration and actions (read and write)
-2. Set the following secrets in your repository settings:
-    - ``PAT_TOKEN``: Content and Pull Requests (read and write)
-    - ``PYPI_API_TOKEN``: Your PyPI token
-    - ``TEST_PYPI_API_TOKEN``: Your Test PyPI token
-3. Modify the `.github/workflows/configure_repo.yml` file to set up the minimum (an maximum) python versions, and a list of topics
-4. Run the `configure_repo` workflow manually from the Actions tab
-5. Set up read the docs to build documentation for this project
-6. Clone your repository and start coding!
-
-🎯 **Project Description**
---------------------------
-
-This project template provides a solid foundation for Python development with pre-configured:
-
-**Development Environment**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- **Modern Python Setup**: Python 3.13+ with virtual environment configuration
-- **Code Quality Tools**: Pre-commit hooks, linting with Ruff, formatting with Black
-- **Testing Framework**: Pytest with coverage reporting and configuration
-- **Documentation**: Sphinx-based documentation with automatic API generation
-
-**CI/CD Infrastructure**
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-- **GitHub Actions**: Automated testing, linting, and deployment workflows
-- **Docker Support**: Containerized development and deployment environment
-- **Code Quality**: Automated code quality checks and test coverage reporting
-- **Release Management**: Automated versioning and release processes
-
-**Project Structure**
-~~~~~~~~~~~~~~~~~~~~~
-
-- **Modular Architecture**: Clean separation of concerns with standard Python package structure
-- **Configuration Management**: Centralized configuration with pyproject.toml
-- **Documentation**: Complete documentation setup with Sphinx and reStructuredText
-- **Testing Setup**: Comprehensive testing configuration with pytest and coverage
-
-🚀 **Key Features**
+Project Description
 -------------------
 
-**Developer Experience**
-~~~~~~~~~~~~~~~~~~~~~~~~
+Resume Composer is a powerful tool designed to help job seekers and professionals maintain multiple versions of their resume without the hassle of manual editing. Instead of maintaining separate resume files for different positions, you create one master template with placeholders and let Resume Composer generate tailored versions automatically.
 
-- **Pre-commit Hooks**: Automatic code formatting and quality checks
-- **Modern Tooling**: Latest Python development tools and best practices
-- **IDE Configuration**: VS Code settings and task configurations included
-- **Environment Management**: Conda and pip-tools support for dependency management
+**Key Benefits:**
 
-📚 **Documentation**
---------------------
+- **Efficient Management**: Update all resume variants by modifying a single template
+- **Time Saving**: No more manual editing of multiple resume files
+- **Professional Quality**: Leverage LaTeX's superior typesetting capabilities
 
-**Essential Guides:**
+Key Features
+------------
+
+Resume Customization
+~~~~~~~~~~~~~~~~~~~~
+
+- **Template-Based System**: Use LaTeX templates with numbered placeholders (``<1>``, ``<place_holder>``, etc.) that get replaced with tag-specific values
+- **Priority System**: Configure tag precedence when multiple tags apply
+- **Batch Processing**: Generate multiple resume variants in one command
+
+Flexible Configuration
+~~~~~~~~~~~~~~~~~~~~~~
+
+- **JSON Configuration**: Clean, readable configuration format
+- **Multi-Dimensional Targeting**: Customize by role (data scientist, researcher), geography (USA, UK), and career stage (academic, industry)
+
+Professional Output
+~~~~~~~~~~~~~~~~~~~
+
+- **PDF Generation**: Automatic compilation to publication-ready PDFs
+- **Consistent Styling**: Maintain visual consistency across all variants
+- **Quality Control**: Built-in validation and error checking
+
+Resume Repository Automation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **GitHub Actions Templates**: Ready-to-use workflow files for your resume repositories
+- **Automatic PDF Generation**: Set up CI/CD to build resumes on every template or config update
+- **Multi-Profile Publishing**: Generate and publish all resume variants as downloadable artifacts
+
+Quick Start
+-----------
+
+1. **Installation**: Clone the repository and install the package:
+
+    .. code-block:: bash
+
+        # OR clone from GitHub
+        git clone https://github.com/j-moralejo-pinas/resume-composer.git
+        cd resume-composer
+        pip install -e .
+
+2. **Create Template**: Modify the template and configuration files in the ``data/`` folder to suit your needs.
+
+3. **Basic Usage**: Create your resume or multiple resumes on batch:
+
+    .. code-block:: bash
+
+        # Generate a single customized resume
+        python -m resume_composer.substitute_resume --input "data/sample_resume_template.tex" --config "data/sample_config.json" --output output_folder --tags data_scientist
+
+        # Generate multiple resumes for different profiles
+        python -m resume_composer.generate_profiles --input "data/sample_resume_template.tex" --profiles "data/sample_profiles.txt" --config "data/sample_config.json"
+
+4. If multiple tags match a placeholder, the first tag in the command line takes precedence.
+
+Resume Repository Automation
+----------------------------
+
+1. **Create a repository**: This repository will contain the template, configuration, and profiles files, and the generated resumes will be built automatically using GitHub Actions.
+
+2. Upload the provided folder ``.github/workflows/`` found inside ``src/repo_automation_workflows/`` to your resume repository to enable automatic resume generation on GitHub Actions.
+
+3. Set a Personal Access Token as a secret in your GitHub repository settings with the name ``PAT_TOKEN``, and read and write content permissions.
+
+4. Upload a LaTeX template (``resume_template.tex``), a configuration file (``config.json``), and a profiles file (``profiles.txt``).
+
+5. On each push to the repository that modifies either the template or the profiles, GitHub Actions will automatically generate the resumes based on your template and configuration, producing tex and PDF files as artifacts, and pushing them to the repo.
+
+🔧 Advanced Usage
+----------------
+
+Command Line Options
+~~~~~~~~~~~~~~~~~~~
+
+**Single Resume Generation:**
+
+.. code-block:: bash
+
+   python -m resume_composer.substitute_resume [OPTIONS]
+   
+   Options:
+     --tags TAG1,TAG2,...      Tags to apply (comma-separated)
+     --input INPUT_FILE        Input LaTeX template file
+     --output OUTPUT_FILE      Output file path
+     --config CONFIG_FILE      Configuration JSON file
+     --compile                 Compile LaTeX to PDF
+
+**Batch Resume Generation:**
+
+.. code-block:: bash
+
+   python -m resume_composer.generate_profiles [OPTIONS]
+   
+   Options:
+     --profiles PROFILES_FILE  File with countries and tag profiles
+     --config CONFIG_FILE      Configuration JSON file  
+     --input INPUT_FILE        Input LaTeX template
+     --compile                 Compile all generated LaTeX files
+
+Configuration Format
+~~~~~~~~~~~~~~~~~~
+
+The configuration file uses a simple JSON structure where each key represents a placeholder number, and values define the text for different tags:
+
+.. code-block:: json
+
+   {
+     "placeholder_number": {
+       "default": "Default text used when no tags match",
+       "tag1": "Text used when tag1 is specified",
+       "tag2": "Text used when tag2 is specified"
+     }
+   }
+
+**Tag Priority**: When multiple tags are provided, the first matching tag in the command line takes precedence.
+
+Profiles File Format
+~~~~~~~~~~~~~~~~~~~
+
+The profiles file defines batch generation parameters:
+
+.. code-block:: text
+
+   # First line: comma-separated countries
+   USA,UK,Germany,France
+   
+   # Following lines: comma-separated tags for each profile
+   data_scientist,finance
+   researcher,academic  
+   software_engineer,technology
+
+This example generates 12 resumes (4 countries × 3 profiles).
+
+�📚 Documentation
+---------------
 
 - 📦 `Installation Guide <docs/installation.rst>`_ - Setup instructions and requirements
 - 🤝 `Contributing Guidelines <CONTRIBUTING.rst>`_ - Development standards and contribution process
@@ -79,7 +165,3 @@ This project template provides a solid foundation for Python development with pr
 - 👥 `Authors <AUTHORS.rst>`_ - Project contributors and maintainers
 - 📜 `Changelog <CHANGELOG.rst>`_ - Project history and version changes
 - 📜 `Code of Conduct <CODE_OF_CONDUCT.rst>`_ - Guidelines for participation and conduct
-
----
-
-*A modern Python project template with comprehensive CI/CD and development tooling*
