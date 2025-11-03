@@ -54,8 +54,6 @@ jobs:
     steps:
       - name: Checkout calling repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: Checkout resume-composer repository
         uses: actions/checkout@v4
