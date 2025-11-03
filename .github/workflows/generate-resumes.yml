@@ -43,7 +43,10 @@ on:
         required: false
         type: string
         default: 'resume-generator'
-
+    secrets:
+      PAT_TOKEN:
+        description: 'Personal Access Token with repo permissions for pushing changes'
+        required: true
 permissions:
   contents: write
 
@@ -91,6 +94,6 @@ jobs:
       - name: Commit and push changes
         uses: j-moralejo-pinas/ci-cd-python/actions/commit-push@main
         with:
-          pat: ${{ secrets.GITHUB_TOKEN }}
+          pat: ${{ secrets.PAT_TOKEN }}
           message: ${{ inputs.commit_message }}
           labels: ${{ inputs.commit_labels }}
