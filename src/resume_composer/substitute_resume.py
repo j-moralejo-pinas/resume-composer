@@ -536,6 +536,8 @@ def compile_latex_to_pdf(tex_file: str) -> None:
                     aux_file.unlink()
         else:
             logger.error("Compilation failed with return code %d", result.returncode)
+            logger.error("Standard output:")
+            logger.error(result.stdout)
             logger.error("Error output:")
             logger.error(result.stderr)
 
