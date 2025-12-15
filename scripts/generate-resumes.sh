@@ -106,7 +106,7 @@ install_latex() {
     if [[ "$COMPILE_LATEX" == true ]]; then
         echo "📄 Installing LaTeX packages..."
         sudo apt-get update -qq
-        sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended textlive-fonts-extra
+        sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
         echo "✅ LaTeX packages installed successfully"
     else
         echo "⏭️ Skipping LaTeX installation (compile-latex not enabled)"
